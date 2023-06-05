@@ -21,10 +21,12 @@ pub struct GlCache {
     pub stored_index_buffer: GLuint,
     pub stored_index_type: Option<u32>,
     pub stored_vertex_buffer: GLuint,
+    pub stored_storage_buffer: GLuint,
     pub stored_texture: GLuint,
     pub index_buffer: GLuint,
     pub index_type: Option<u32>,
     pub vertex_buffer: GLuint,
+    pub storage_buffer: GLuint,
     pub textures: [GLuint; MAX_SHADERSTAGE_IMAGES],
     pub cur_pipeline: Option<Pipeline>,
     pub color_blend: Option<BlendState>,
@@ -44,7 +46,16 @@ impl GlCache {
                     glBindBuffer(target, buffer);
                 }
             }
-        } else {
+        } else if target == GL_SHADER_STORAGE_BUFFER {
+            if self.storage_buffer != buffer {
+                self.storage_buffer = buffer;
+                unsafe {
+                    glBindBuffer(target, buffer);
+                    glBindBufferBase(target, 0, buffer);
+                }
+            }
+        }
+        else {
             if self.index_buffer != buffer {
                 self.index_buffer = buffer;
                 unsafe {
@@ -58,7 +69,10 @@ impl GlCache {
     pub fn store_buffer_binding(&mut self, target: GLenum) {
         if target == GL_ARRAY_BUFFER {
             self.stored_vertex_buffer = self.vertex_buffer;
-        } else {
+        } else if target == GL_SHADER_STORAGE_BUFFER {
+            self.stored_storage_buffer = self.storage_buffer;
+        }
+        else {
             self.stored_index_buffer = self.index_buffer;
             self.stored_index_type = self.index_type;
         }
@@ -70,7 +84,13 @@ impl GlCache {
                 self.bind_buffer(target, self.stored_vertex_buffer, None);
                 self.stored_vertex_buffer = 0;
             }
-        } else {
+        } else if target == GL_SHADER_STORAGE_BUFFER {
+            if self.stored_storage_buffer != 0 {
+                self.bind_buffer(target, self.stored_storage_buffer, None);
+                self.stored_storage_buffer = 0;
+            }
+        }
+        else {
             if self.stored_index_buffer != 0 {
                 self.bind_buffer(target, self.stored_index_buffer, self.stored_index_type);
                 self.stored_index_buffer = 0;
@@ -99,6 +119,9 @@ impl GlCache {
     pub fn clear_buffer_bindings(&mut self) {
         self.bind_buffer(GL_ARRAY_BUFFER, 0, None);
         self.vertex_buffer = 0;
+
+        self.bind_buffer(GL_SHADER_STORAGE_BUFFER, 0, None);
+        self.storage_buffer = 0;
 
         self.bind_buffer(GL_ELEMENT_ARRAY_BUFFER, 0, None);
         self.index_buffer = 0;

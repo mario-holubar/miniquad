@@ -512,11 +512,12 @@ pub const MAX_SHADERSTAGE_IMAGES: usize = 12;
 
 pub struct Features {
     pub instancing: bool,
+    pub shader_storage_buffers: bool,
 }
 
 impl Default for Features {
     fn default() -> Features {
-        Features { instancing: true }
+        Features { instancing: true, shader_storage_buffers: true, }
     }
 }
 
@@ -700,6 +701,8 @@ pub struct Bindings {
     /// from a vertex buffer, with each subsequent 3 indices forming a
     /// triangle.
     pub index_buffer: BufferId,
+    /// Storage buffers for read / write data storange in shaders.
+    pub storage_buffer: Option<BufferId>,
     /// Textures to be used with when drawing the geometry in the fragment
     /// shader.
     pub images: Vec<TextureId>,
@@ -709,6 +712,7 @@ pub struct Bindings {
 pub enum BufferType {
     VertexBuffer,
     IndexBuffer,
+    StorageBuffer,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -722,6 +726,7 @@ fn gl_buffer_target(buffer_type: &BufferType) -> GLenum {
     match buffer_type {
         BufferType::VertexBuffer => GL_ARRAY_BUFFER,
         BufferType::IndexBuffer => GL_ELEMENT_ARRAY_BUFFER,
+        BufferType::StorageBuffer => GL_SHADER_STORAGE_BUFFER,
     }
 }
 

@@ -246,6 +246,9 @@ pub const GL_QUERY_RESULT: u32 = 34918;
 pub const GL_QUERY_RESULT_AVAILABLE: u32 = 34919;
 pub const GL_VENDOR: u32 = 0x1F00;
 pub const GL_VERSION: u32 = 0x1F02;
+pub const GL_MAJOR_VERSION: u32 = 0x821b;
+pub const GL_MINOR_VERSION: u32 = 0x821c;
+pub const GL_SHADER_STORAGE_BUFFER: u32 = 0x90d2;
 
 pub const WGL_NUMBER_PIXEL_FORMATS_ARB: u32 = 0x2000;
 pub const WGL_SUPPORT_OPENGL_ARB: u32 = 0x2010;
@@ -537,6 +540,7 @@ gl_loader!(
     fn glDisable(cap: GLenum) -> (),
     fn glColorMask(red: GLboolean, green: GLboolean, blue: GLboolean, alpha: GLboolean) -> (),
     fn glBindBuffer(target: GLenum, buffer: GLuint) -> (),
+    fn glBindBufferBase(target: GLenum, index: GLuint, buffer: GLuint) -> (),
     fn glBindVertexArray(array: GLuint) -> (),
     fn glDeleteVertexArrays(n: GLsizei, arrays: *const GLuint) -> (),
     fn glDepthMask(flag: GLboolean) -> (),
@@ -642,4 +646,14 @@ pub unsafe fn is_gl2() -> bool {
     version_string.is_empty()
         || version_string.starts_with("2")
         || version_string.starts_with("OpenGL ES 2")
+}
+
+pub unsafe fn gl_version() -> (GLint, GLint) {
+    let mut maj: GLint = 0;
+    let maj_ptr: *mut GLint = &mut maj;
+    glGetIntegerv(super::gl::GL_MAJOR_VERSION, maj_ptr);
+    let mut min: GLint = 0;
+    let min_ptr: *mut GLint = &mut min;
+    glGetIntegerv(super::gl::GL_MINOR_VERSION, min_ptr);
+    (maj, min)
 }

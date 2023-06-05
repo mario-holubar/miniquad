@@ -394,6 +394,12 @@ impl GlContext {
 
             glGenVertexArrays(1, &mut vao as *mut _);
             glBindVertexArray(vao);
+            let (maj, min) = crate::native::gl::gl_version();
+            let ssbo_available = {
+                if maj < 4 { false }
+                else if maj == 4 && min < 3 { false }
+                else { true }
+            };
             GlContext {
                 default_framebuffer,
                 shaders: vec![],
@@ -403,15 +409,18 @@ impl GlContext {
                 textures: vec![],
                 features: Features {
                     instancing: !crate::native::gl::is_gl2(),
+                    shader_storage_buffers: ssbo_available,
                     ..Default::default()
                 },
                 cache: GlCache {
                     stored_index_buffer: 0,
                     stored_index_type: None,
                     stored_vertex_buffer: 0,
+                    stored_storage_buffer: 0,
                     index_buffer: 0,
                     index_type: None,
                     vertex_buffer: 0,
+                    storage_buffer: 0,
                     cur_pipeline: None,
                     color_blend: None,
                     alpha_blend: None,
@@ -970,6 +979,7 @@ impl RenderingBackend for GlContext {
             BufferType::IndexBuffer if element_size == 4 => Some(GL_UNSIGNED_INT),
             BufferType::IndexBuffer => panic!("unsupported index buffer dimension"),
             BufferType::VertexBuffer => None,
+            BufferType::StorageBuffer => None,
         };
         let mut gl_buf: u32 = 0;
 
@@ -1082,6 +1092,14 @@ impl RenderingBackend for GlContext {
             self.buffers[bindings.index_buffer.0].gl_buf,
             self.buffers[bindings.index_buffer.0].index_type,
         );
+
+        if let Some(buf) = bindings.storage_buffer {
+            self.cache.bind_buffer(
+                GL_SHADER_STORAGE_BUFFER,
+                self.buffers[buf.0].gl_buf,
+                self.buffers[buf.0].index_type,
+            );
+        }
 
         let pip = &self.pipelines[self.cache.cur_pipeline.unwrap().0];
 
