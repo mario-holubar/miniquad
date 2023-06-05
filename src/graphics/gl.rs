@@ -1119,14 +1119,25 @@ impl RenderingBackend for GlContext {
                         .bind_buffer(GL_ARRAY_BUFFER, vb.gl_buf, vb.index_type);
 
                     unsafe {
-                        glVertexAttribPointer(
-                            attr_index as GLuint,
-                            attribute.size,
-                            attribute.type_,
-                            GL_FALSE as u8,
-                            attribute.stride,
-                            attribute.offset as *mut _,
-                        );
+                        if attribute.type_ == GL_FLOAT {
+                            glVertexAttribPointer(
+                                attr_index as GLuint,
+                                attribute.size,
+                                attribute.type_,
+                                GL_FALSE as u8,
+                                attribute.stride,
+                                attribute.offset as *mut _,
+                            );
+                        }
+                        else {
+                            glVertexAttribIPointer(
+                                attr_index as GLuint,
+                                attribute.size,
+                                attribute.type_,
+                                attribute.stride,
+                                attribute.offset as *mut _,
+                            );
+                        }
                         if self.features.instancing {
                             glVertexAttribDivisor(attr_index as GLuint, attribute.divisor as u32);
                         }
