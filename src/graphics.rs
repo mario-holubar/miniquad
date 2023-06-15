@@ -36,6 +36,8 @@ pub enum UniformType {
     Int3,
     /// Four unsigned 32-bit integers (equivalent to `[u32; 4]`)
     Int4,
+    /// Three by three matrix of 32-bit floats
+    Mat3,
     /// Four by four matrix of 32-bit floats
     Mat4,
 }
@@ -52,6 +54,7 @@ impl UniformType {
             UniformType::Int2 => 8,
             UniformType::Int3 => 12,
             UniformType::Int4 => 16,
+            UniformType::Mat3 => 36,
             UniformType::Mat4 => 64,
         }
     }

@@ -1220,6 +1220,9 @@ impl RenderingBackend for GlContext {
                         Int4 => {
                             glUniform4iv(gl_loc, uniform.array_count, data_int);
                         }
+                        Mat3 => {
+                            glUniformMatrix3fv(gl_loc, uniform.array_count, 0, data)
+                        }
                         Mat4 => {
                             glUniformMatrix4fv(gl_loc, uniform.array_count, 0, data);
                         }
