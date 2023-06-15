@@ -39,6 +39,8 @@ struct ShaderUniform {
 
 struct ShaderInternal {
     program: GLuint,
+    gl_vert_shader: GLuint,
+    gl_frag_shader: GLuint,
     images: Vec<ShaderImage>,
     uniforms: Vec<ShaderUniform>,
 }
@@ -498,6 +500,8 @@ fn load_shader_internal(
 
         Ok(ShaderInternal {
             program,
+            gl_vert_shader: vertex_shader,
+            gl_frag_shader: fragment_shader,
             images,
             uniforms,
         })
@@ -690,6 +694,14 @@ impl RenderingBackend for GlContext {
         )?;
         self.shaders.push(shader);
         Ok(ShaderId(self.shaders.len() - 1))
+    }
+    fn delete_shader(&mut self, shader: ShaderId) {
+        let s = &self.shaders[shader.0];
+        unsafe {
+            glDeleteShader(s.gl_vert_shader);
+            glDeleteShader(s.gl_frag_shader);
+            glDeleteProgram(s.program);
+        }
     }
 
     fn new_texture(

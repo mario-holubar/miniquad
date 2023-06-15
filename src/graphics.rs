@@ -1027,6 +1027,7 @@ pub trait RenderingBackend {
         shader: ShaderSource,
         meta: ShaderMeta,
     ) -> Result<ShaderId, ShaderError>;
+    fn delete_shader(&mut self, shader: ShaderId);
     fn new_texture(
         &mut self,
         access: TextureAccess,
