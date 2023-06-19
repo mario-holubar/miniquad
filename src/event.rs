@@ -13,9 +13,9 @@ pub struct Touch {
     pub y: f32,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Hash, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Hash, Eq, num_derive::FromPrimitive)]
 pub enum KeyCode {
-    Space,
+    Space = 0,
     Apostrophe,
     Comma,
     Minus,
