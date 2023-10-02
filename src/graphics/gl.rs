@@ -31,6 +31,8 @@ struct Buffer {
     // used only as a type argument for glDrawElements and can be
     // 1, 2 or 4
     index_type: Option<u32>,
+    // Storage buffer base
+    base: Option<u32>,
 }
 
 #[derive(Debug)]
@@ -428,10 +430,12 @@ impl GlContext {
                     stored_index_type: None,
                     stored_vertex_buffer: 0,
                     stored_storage_buffer: 0,
+                    stored_storage_buffer_base: None,
                     index_buffer: 0,
                     index_type: None,
                     vertex_buffer: 0,
                     storage_buffer: 0,
+                    storage_buffer_base: None,
                     cur_pipeline: None,
                     color_blend: None,
                     alpha_blend: None,
@@ -987,6 +991,7 @@ impl RenderingBackend for GlContext {
         type_: BufferType,
         usage: BufferUsage,
         data: BufferSource,
+        base: Option<u32>,
     ) -> BufferId {
         let gl_target = gl_buffer_target(&type_);
         let gl_usage = gl_usage(&usage);
@@ -1009,7 +1014,7 @@ impl RenderingBackend for GlContext {
         unsafe {
             glGenBuffers(1, &mut gl_buf as *mut _);
             self.cache.store_buffer_binding(gl_target);
-            self.cache.bind_buffer(gl_target, gl_buf, index_type);
+            self.cache.bind_buffer(gl_target, gl_buf, index_type, base);
 
             glBufferData(gl_target, size as _, std::ptr::null() as *const _, gl_usage);
             if let BufferSource::Slice(data) = data {
@@ -1025,6 +1030,7 @@ impl RenderingBackend for GlContext {
             buffer_type: type_,
             size,
             index_type,
+            base,
         };
         self.buffers.push(buffer);
         BufferId(self.buffers.len() - 1)
@@ -1048,7 +1054,7 @@ impl RenderingBackend for GlContext {
         let gl_target = gl_buffer_target(&buffer.buffer_type);
         self.cache.store_buffer_binding(gl_target);
         self.cache
-            .bind_buffer(gl_target, buffer.gl_buf, buffer.index_type);
+            .bind_buffer(gl_target, buffer.gl_buf, buffer.index_type, buffer.base);
         if size > buffer.size {
             unsafe { glBufferData(gl_target, size as _, data.ptr as _, buffer.gl_usage) };
         } else {
@@ -1113,13 +1119,15 @@ impl RenderingBackend for GlContext {
             GL_ELEMENT_ARRAY_BUFFER,
             self.buffers[bindings.index_buffer.0].gl_buf,
             self.buffers[bindings.index_buffer.0].index_type,
+            self.buffers[bindings.index_buffer.0].base,
         );
 
-        if let Some(buf) = bindings.storage_buffer {
+        for buf in &bindings.storage_buffers {
             self.cache.bind_buffer(
                 GL_SHADER_STORAGE_BUFFER,
                 self.buffers[buf.0].gl_buf,
                 self.buffers[buf.0].index_type,
+                self.buffers[buf.0].base,
             );
         }
 
@@ -1138,7 +1146,7 @@ impl RenderingBackend for GlContext {
                     attribute != cached_attr.attribute || cached_attr.gl_vbuf != vb.gl_buf
                 }) {
                     self.cache
-                        .bind_buffer(GL_ARRAY_BUFFER, vb.gl_buf, vb.index_type);
+                        .bind_buffer(GL_ARRAY_BUFFER, vb.gl_buf, vb.index_type, vb.base);
 
                     unsafe {
                         if attribute.type_ == GL_FLOAT {
@@ -1319,8 +1327,9 @@ impl RenderingBackend for GlContext {
     fn end_render_pass(&mut self) {
         unsafe {
             glBindFramebuffer(GL_FRAMEBUFFER, self.default_framebuffer);
-            self.cache.bind_buffer(GL_ARRAY_BUFFER, 0, None);
-            self.cache.bind_buffer(GL_ELEMENT_ARRAY_BUFFER, 0, None);
+            self.cache.bind_buffer(GL_ARRAY_BUFFER, 0, None, None);
+            self.cache.bind_buffer(GL_ELEMENT_ARRAY_BUFFER, 0, None, None);
+            self.cache.bind_buffer(GL_SHADER_STORAGE_BUFFER, 0, None, Some(0));
         }
     }
 

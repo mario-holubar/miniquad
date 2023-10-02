@@ -765,7 +765,7 @@ pub struct Bindings {
     /// triangle.
     pub index_buffer: BufferId,
     /// Storage buffers for read / write data storange in shaders.
-    pub storage_buffer: Option<BufferId>,
+    pub storage_buffers: Vec<BufferId>,
     /// Textures to be used with when drawing the geometry in the fragment
     /// shader.
     pub images: Vec<TextureId>,
@@ -1127,7 +1127,7 @@ pub trait RenderingBackend {
     ///        BufferSource::slice(&vertices),
     ///    );
     /// ```
-    fn new_buffer(&mut self, type_: BufferType, usage: BufferUsage, data: BufferSource)
+    fn new_buffer(&mut self, type_: BufferType, usage: BufferUsage, data: BufferSource, base: Option<u32>)
         -> BufferId;
     fn buffer_update(&mut self, buffer: BufferId, data: BufferSource);
     /// Size of buffer in bytes
